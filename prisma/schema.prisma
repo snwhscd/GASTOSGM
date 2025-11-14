@@ -1,0 +1,79 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Gasto {
+  id            Int       @id @default(autoincrement())
+  folio         String?
+  fecha         DateTime?
+  rz            String?
+  banco         String?
+  tdc           String?
+  proveedor     String?
+  concepto      String?
+  referencia    String?
+  documento     String?
+  proyecto      String?
+  placa         String?
+  responsable   String?
+  transferencia String?
+  tipoGasto     String?
+  Vehiculo      Vehiculo? @relation(fields: [placa], references: [placas])
+}
+
+model GastoExterno {
+  id            Int       @id @default(autoincrement())
+  folio         String?
+  fecha         DateTime?
+  rz            String?
+  banco         String?
+  tdc           String?
+  proveedor     String?
+  concepto      String?
+  referencia    String?
+  documento     String?
+  responsable   String?
+  transferencia String?
+  tipoGasto     String?
+}
+
+model Usuario {
+  id                    Int      @id @default(autoincrement())
+  nombreCompleto        String
+  email                 String   @unique
+  password              String
+  rol                   String   @default("user")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime
+  canViewGastos         Boolean  @default(true)
+  canViewGastosExternos Boolean  @default(true)
+  canViewUsuarios       Boolean  @default(false)
+  canViewVehiculos      Boolean  @default(true)
+}
+
+model Vehiculo {
+  id        Int      @id @default(autoincrement())
+  marca     String
+  tipo      String?
+  color     String?
+  modelo    String?
+  placas    String   @unique
+  ubicacion String?
+  motor     String?
+  serie     String   @unique
+  eco       String?
+  contrato  String?
+  estatus   String?
+  agencia   String?
+  proyecto  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  nombre    String?
+  Gasto     Gasto[]
+}

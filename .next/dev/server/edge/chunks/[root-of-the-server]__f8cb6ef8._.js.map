@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 16, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/Documents/GASTOSGM/middleware.ts"],"sourcesContent":["import { NextResponse } from \"next/server\";\r\nimport type { NextRequest } from \"next/server\";\r\n\r\nexport function middleware(request: NextRequest) {\r\n  const { pathname } = request.nextUrl;\r\n  const authCookie = request.cookies.get(\"auth\");\r\n\r\n  const isLoggedIn = authCookie?.value === \"true\";\r\n\r\n  if (!isLoggedIn && pathname !== \"/login\") {\r\n    return NextResponse.redirect(new URL(\"/login\", request.url));\r\n  }\r\n\r\n  if (isLoggedIn && pathname === \"/login\") {\r\n    return NextResponse.redirect(new URL(\"/\", request.url));\r\n  }\r\n\r\n  return NextResponse.next();\r\n}\r\n\r\nexport const config = {\r\n  matcher: [\"/((?!api|_next).*)\"],\r\n};\r\n"],"names":[],"mappings":";;;;;;AAAA;AAAA;;AAGO,SAAS,WAAW,OAAoB;IAC7C,MAAM,EAAE,QAAQ,EAAE,GAAG,QAAQ,OAAO;IACpC,MAAM,aAAa,QAAQ,OAAO,CAAC,GAAG,CAAC;IAEvC,MAAM,aAAa,YAAY,UAAU;IAEzC,IAAI,CAAC,cAAc,aAAa,UAAU;QACxC,OAAO,yNAAY,CAAC,QAAQ,CAAC,IAAI,IAAI,UAAU,QAAQ,GAAG;IAC5D;IAEA,IAAI,cAAc,aAAa,UAAU;QACvC,OAAO,yNAAY,CAAC,QAAQ,CAAC,IAAI,IAAI,KAAK,QAAQ,GAAG;IACvD;IAEA,OAAO,yNAAY,CAAC,IAAI;AAC1B;AAEO,MAAM,SAAS;IACpB,SAAS;QAAC;KAAqB;AACjC"}}]
+}
