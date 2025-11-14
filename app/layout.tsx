@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hidalmotors - Gestión de Flota",
-  description: "Sistema de gestión completo para la flota de vehículos",
+  title: "Hidalmotors - Sistema de control de gastos",
+  description: "Sistema de gestión de gastos de hidalmotors",
 };
 
 export default function RootLayout({
