@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
@@ -15,13 +16,19 @@ import {
   FormMessage,
 } from "../ui/form";
 import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { gastoFormSchema } from "./GastosForm.form";
-import { useState, useEffect, useCallback, useMemo } from "react";
 
 interface Vehiculo {
   id: number;
   marca: string | null;
+  nombre: string | null;
   modelo: string | null;
   placas: string;
   proyecto: string | null;
@@ -53,13 +60,16 @@ type GastosFormProps = {
 const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [loadingVehiculos, setLoadingVehiculos] = useState(true);
-  const [isResponsableFilled, setIsResponsableFilled] = useState(false);
+  const [placaQuery, setPlacaQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const form = useForm<z.infer<typeof gastoFormSchema>>({
     resolver: zodResolver(gastoFormSchema),
     defaultValues: {
       folio: gasto?.folio || "",
-      fecha: gasto?.fecha ? new Date(gasto.fecha).toISOString().split('T')[0] : "",
+      fecha: gasto?.fecha
+        ? new Date(gasto.fecha).toISOString().split("T")[0]
+        : "",
       rz: gasto?.rz || "",
       banco: gasto?.banco || "",
       tdc: gasto?.tdc || "",
@@ -79,7 +89,7 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
 
   const updateProyecto = useCallback(() => {
     if (watchedPlaca) {
-      const veh = vehiculos.find(v => v.placas === watchedPlaca);
+      const veh = vehiculos.find((v) => v.placas === watchedPlaca);
       if (veh && veh.proyecto) {
         form.setValue("proyecto", veh.proyecto);
       }
@@ -90,19 +100,37 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
     updateProyecto();
   }, [updateProyecto]);
 
+  useEffect(() => {
+    setPlacaQuery(watchedPlaca || "");
+  }, [watchedPlaca]);
+
   const filteredVehiculos = useMemo(() => {
-    return vehiculos.filter(v => v.placas && v.placas.trim());
+    return vehiculos.filter((v) => v.placas && v.placas.trim());
   }, [vehiculos]);
+
+  const filteredSuggestions = useMemo(() => {
+    if (!placaQuery.trim()) return [];
+    return filteredVehiculos
+      .filter(
+        (v) =>
+          v.placas.toLowerCase().includes(placaQuery.toLowerCase()) ||
+          (v.marca &&
+            v.marca.toLowerCase().includes(placaQuery.toLowerCase())) ||
+          (v.modelo &&
+            v.modelo.toLowerCase().includes(placaQuery.toLowerCase()))
+      )
+      .slice(0, 10); // Limitar a 10 sugerencias
+  }, [placaQuery, filteredVehiculos]);
 
   // Cargar vehículos para el dropdown
   useEffect(() => {
     const fetchVehiculos = async () => {
       try {
-        const response = await axios.get('/api/vehiculos');
+        const response = await axios.get("/api/vehiculos");
         setVehiculos(response.data);
       } catch (error) {
-        console.error('Error fetching vehiculos:', error);
-        toast.error('Error al cargar la lista de vehículos');
+        console.error("Error fetching vehiculos:", error);
+        toast.error("Error al cargar la lista de vehículos");
       } finally {
         setLoadingVehiculos(false);
       }
@@ -111,61 +139,40 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
     fetchVehiculos();
   }, []);
 
-  // Cargar información del usuario actual
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
+  const onSubmit = useCallback(
+    async (values: z.infer<typeof gastoFormSchema>) => {
       try {
-        const response = await axios.get('/api/user');
-        // Establecer el responsable automáticamente si no hay uno definido y no es edición
-        if (!gasto && response.data.nombreCompleto) {
-          form.setValue("responsable", response.data.nombreCompleto);
-          setIsResponsableFilled(true);
-        } else if (gasto && gasto.responsable) {
-          // Si es edición y ya tiene responsable, deshabilitar el campo
-          setIsResponsableFilled(true);
-        }
-      } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          // Usuario no autenticado - permitir edición manual
-          console.log('Usuario no autenticado - campo responsable editable manualmente');
-          setIsResponsableFilled(false);
+        const payload = {
+          ...values,
+          fecha: values.fecha ? new Date(values.fecha).toISOString() : null,
+        };
+
+        if (gasto) {
+          // Editar gasto existente
+          await axios.put(`/api/gastos/${gasto.id}`, payload);
+          toast.success("Gasto actualizado correctamente!");
         } else {
-          console.error('Error fetching current user:', error);
+          // Crear nuevo gasto
+          await axios.post("/api/gastos", payload);
+          toast.success("Gasto registrado correctamente!");
+        }
+
+        form.reset();
+        onSuccess?.();
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const errorMessage =
+            error.response?.data?.error ||
+            error.response?.data?.message ||
+            "Error al procesar el gasto";
+          toast.error(errorMessage);
+        } else {
+          toast.error("Error inesperado al procesar el gasto");
         }
       }
-    };
-
-    fetchCurrentUser();
-  }, [form, gasto]);
-
-  const onSubmit = useCallback(async (values: z.infer<typeof gastoFormSchema>) => {
-    try {
-      const payload = {
-        ...values,
-        fecha: values.fecha ? new Date(values.fecha).toISOString() : null,
-      };
-
-      if (gasto) {
-        // Editar gasto existente
-        await axios.put(`/api/gastos/${gasto.id}`, payload);
-        toast.success("Gasto actualizado correctamente!");
-      } else {
-        // Crear nuevo gasto
-        await axios.post("/api/gastos", payload);
-        toast.success("Gasto registrado correctamente!");
-      }
-
-      form.reset();
-      onSuccess?.();
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.error || error.response?.data?.message || "Error al procesar el gasto";
-        toast.error(errorMessage);
-      } else {
-        toast.error("Error inesperado al procesar el gasto");
-      }
-    }
-  }, [gasto, form, onSuccess]);
+    },
+    [gasto, form, onSuccess]
+  );
 
   return (
     <div className="max-h-[80vh] overflow-y-auto px-4">
@@ -182,7 +189,11 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
               <FormItem>
                 <FormLabel>Folio</FormLabel>
                 <FormControl>
-                  <Input placeholder="Folio..." className="max-w-sm" {...field} />
+                  <Input
+                    placeholder="Folio..."
+                    className="max-w-sm"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -212,7 +223,11 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
               <FormItem>
                 <FormLabel>Razón Social</FormLabel>
                 <FormControl>
-                  <Input placeholder="Razón Social..." className="max-w-sm" {...field} />
+                  <Input
+                    placeholder="Razón Social..."
+                    className="max-w-sm"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -227,7 +242,11 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
               <FormItem>
                 <FormLabel>Banco</FormLabel>
                 <FormControl>
-                  <Input placeholder="Banco..." className="max-w-sm" {...field} />
+                  <Input
+                    placeholder="Banco..."
+                    className="max-w-sm"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -257,7 +276,11 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
               <FormItem>
                 <FormLabel>Proveedor</FormLabel>
                 <FormControl>
-                  <Input placeholder="Proveedor..." className="max-w-sm" {...field} />
+                  <Input
+                    placeholder="Proveedor..."
+                    className="max-w-sm"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -272,7 +295,11 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
               <FormItem>
                 <FormLabel>Concepto</FormLabel>
                 <FormControl>
-                  <Input placeholder="Concepto..." className="max-w-sm" {...field} />
+                  <Input
+                    placeholder="Concepto..."
+                    className="max-w-sm"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -287,7 +314,11 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
               <FormItem>
                 <FormLabel>Referencia</FormLabel>
                 <FormControl>
-                  <Input placeholder="Referencia..." className="max-w-sm" {...field} />
+                  <Input
+                    placeholder="Referencia..."
+                    className="max-w-sm"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -302,7 +333,11 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
               <FormItem>
                 <FormLabel>Documento</FormLabel>
                 <FormControl>
-                  <Input placeholder="Documento..." className="max-w-sm" {...field} />
+                  <Input
+                    placeholder="Documento..."
+                    className="max-w-sm"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -316,20 +351,54 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Vehículo (Placas)</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingVehiculos}>
+                <div className="relative">
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={loadingVehiculos ? "Cargando vehículos..." : "Selecciona un vehículo"} />
-                    </SelectTrigger>
+                    <Input
+                      placeholder={
+                        loadingVehiculos
+                          ? "Cargando vehículos..."
+                          : "Escribe placas, marca o modelo..."
+                      }
+                      className="max-w-sm"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setPlacaQuery(e.target.value);
+                        setShowSuggestions(true);
+                      }}
+                      onFocus={() => setShowSuggestions(true)}
+                      onBlur={() =>
+                        setTimeout(() => setShowSuggestions(false), 200)
+                      }
+                      disabled={loadingVehiculos}
+                    />
                   </FormControl>
-                  <SelectContent>
-                    {filteredVehiculos.map((vehiculo) => (
-                      <SelectItem key={vehiculo.id} value={vehiculo.placas}>
-                        {vehiculo.placas} - {vehiculo.marca} {vehiculo.modelo}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {showSuggestions && filteredSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full max-w-sm bg-popover border border-border rounded-md shadow-md mt-1 max-h-40 overflow-y-auto">
+                      {filteredSuggestions.map((vehiculo) => (
+                        <div
+                          key={vehiculo.id}
+                          className="px-3 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
+                          onClick={() => {
+                            field.onChange(vehiculo.placas);
+                            setPlacaQuery(vehiculo.placas);
+                            setShowSuggestions(false);
+                            // Actualizar proyecto automáticamente
+                            if (vehiculo.proyecto) {
+                              form.setValue("proyecto", vehiculo.proyecto);
+                            }
+                          }}
+                        >
+                          <div className="font-medium">{vehiculo.placas}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {vehiculo.nombre ? `${vehiculo.nombre} - ` : ""}
+                            {vehiculo.marca} {vehiculo.modelo}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -343,7 +412,12 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
               <FormItem>
                 <FormLabel>Proyecto</FormLabel>
                 <FormControl>
-                  <Input placeholder="Proyecto..." className="max-w-sm" {...field} disabled={!!field.value} />
+                  <Input
+                    placeholder="Proyecto..."
+                    className="max-w-sm"
+                    {...field}
+                    disabled={!!field.value}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -358,7 +432,11 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
               <FormItem>
                 <FormLabel>Responsable</FormLabel>
                 <FormControl>
-                  <Input placeholder="Responsable..." className="max-w-sm" {...field} disabled={isResponsableFilled} />
+                  <Input
+                    placeholder="Responsable..."
+                    className="max-w-sm"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -373,7 +451,13 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
               <FormItem>
                 <FormLabel>Monto</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" placeholder="0.00" className="max-w-sm" {...field} />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="max-w-sm"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -387,18 +471,23 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Tipo de Gasto</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona el tipo de gasto" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="combustible">Combustible</SelectItem>
-                    <SelectItem value="mantenimiento">Mantenimiento</SelectItem>
-                    <SelectItem value="seguros">Seguros</SelectItem>
-                    <SelectItem value="multas">Multas</SelectItem>
-                    <SelectItem value="otros">Otros</SelectItem>
+                    <SelectItem value="REFACCIONES">REFACCIONES</SelectItem>
+                    <SelectItem value="LLANTAS">LLANTAS</SelectItem>
+                    <SelectItem value="VERIFICACIONES">
+                      VERIFICACIONES
+                    </SelectItem>
+                    <SelectItem value="PAPELERÍA">PAPELERÍA</SelectItem>
+                    <SelectItem value="OTROS">OTROS</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -406,7 +495,10 @@ const GastosForm = ({ onSuccess, gasto }: GastosFormProps) => {
             )}
           />
 
-          <Button type="submit" className="col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 cursor-pointer w-full">
+          <Button
+            type="submit"
+            className="col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 cursor-pointer w-full"
+          >
             {gasto ? "Actualizar Gasto" : "Registrar Gasto"}
           </Button>
         </form>
