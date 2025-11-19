@@ -1,9 +1,4 @@
 {
-  "/(dashboard)/gastos/page": "app/(dashboard)/gastos/page.js",
-  "/(dashboard)/page": "app/(dashboard)/page.js",
-  "/(dashboard)/vehiculos/page": "app/(dashboard)/vehiculos/page.js",
-  "/api/gastos-externos/route": "app/api/gastos-externos/route.js",
-  "/api/gastos/route": "app/api/gastos/route.js",
-  "/api/user/route": "app/api/user/route.js",
-  "/api/vehiculos/route": "app/api/vehiculos/route.js"
+  "/api/login/route": "app/api/login/route.js",
+  "/login/page": "app/login/page.js"
 }

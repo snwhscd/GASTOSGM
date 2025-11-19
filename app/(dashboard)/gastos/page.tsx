@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import GastosForm from "@/components/GastosForm/GastosForm";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -25,7 +27,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -34,23 +35,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { exportToExcel } from "@/lib/exportToExcel";
+import { formatCurrency } from "@/lib/utils";
+import axios from "axios";
 import {
-  DollarSign,
-  Plus,
-  Search,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  Edit,
-  Trash2,
+  DollarSign,
   Download,
+  Edit,
+  Eye,
+  Plus,
+  Search,
+  Trash2,
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import axios from "axios";
-import GastosForm from "@/components/GastosForm/GastosForm";
-import { exportToExcel } from "@/lib/exportToExcel";
 
 interface Gasto {
   id: number;
@@ -293,7 +293,9 @@ export default function GastosPage() {
         <div className="flex gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
-            onClick={() => exportToExcel(filteredGastos, 'gastos.xlsx', 'Gastos')}
+            onClick={() =>
+              exportToExcel(filteredGastos, "gastos.xlsx", "Gastos")
+            }
             className="flex-1 sm:flex-none"
           >
             <Download className="mr-2 h-4 w-4" />

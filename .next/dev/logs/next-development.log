@@ -1,20 +1,9 @@
-[00:00:01.505] Server  WARN     ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
-[00:00:01.792] Server  LOG      ✓ Ready in 1256ms
-[00:00:18.052] Server  LOG     Token recibido: "Sí"
-[00:00:18.054] Server  LOG     Cookies disponibles: [{...},{...},{...}]
-[00:00:19.706] Server  ERROR   Error fetching gastos: PrismaClientUnknownRequestError: 
-Invalid `prisma.gasto.findMany()` invocation:
-
-
-Unknown nested field 'vehiculo' for operation findManyGasto does not match any query.
-[00:00:20.041] Browser ERROR   Error fetching stats: {}
-[00:02:38.299] Server  LOG     Token recibido: "Sí"
-[00:02:38.300] Server  LOG     Cookies disponibles: [{...},{...},{...}]
-[00:02:46.552] Server  LOG     Token recibido: "Sí"
-[00:02:46.552] Server  LOG     Cookies disponibles: [{...},{...},{...}]
-[00:02:46.690] Server  LOG     Token recibido: "Sí"
-[00:02:46.691] Server  LOG     Cookies disponibles: [{...},{...},{...}]
-[00:03:04.213] Server  LOG     Token recibido: "Sí"
-[00:03:04.213] Server  LOG     Cookies disponibles: [{...},{...},{...}]
-[00:03:04.350] Server  LOG     Token recibido: "Sí"
-[00:03:04.350] Server  LOG     Cookies disponibles: [{...},{...},{...}]
+[00:00:10.738] Server  WARN     ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+[00:00:12.678] Server  LOG      ✓ Ready in 7.5s
+[00:00:28.598] Server  LOG      ○ Compiling /login ...
+[00:03:19.792] Server  LOG     function () { [native code] }
+[00:03:19.950] Server  ERROR   Error en login: SyntaxError: No number after minus sign in JSON at position 1 (line 1 column 2)
+[00:04:02.817] Server  LOG     function () { [native code] }
+[00:04:02.819] Server  LOG     [EMAIL]: admin@admin.com | [PASSWORD]: admin1234
+[00:04:03.342] Server  LOG     Cookies establecidas correctamente
+[00:04:03.343] Server  LOG     Token generado: "eyJhbGciOiJIUzI1NiIs..."

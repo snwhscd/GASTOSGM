@@ -1,29 +1,49 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { ThemeSelector } from "@/components/theme-selector";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
-  Car,
-  DollarSign,
-  Users,
   BarChart3,
+  Car,
+  ChevronLeft,
+  ChevronRight,
+  DollarSign,
   LogOut,
   Menu,
   Receipt,
-  ChevronLeft,
-  ChevronRight,
+  Users,
 } from "lucide-react";
-import { ThemeSelector } from "@/components/theme-selector";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const allNavigation = [
   { name: "Dashboard", href: "/", icon: BarChart3, permission: null },
-  { name: "Vehículos", href: "/vehiculos", icon: Car, permission: "canViewVehiculos" },
-  { name: "Gastos", href: "/gastos", icon: DollarSign, permission: "canViewGastos" },
-  { name: "Gastos Externos", href: "/gastos-externos", icon: Receipt, permission: "canViewGastosExternos" },
-  { name: "Usuarios", href: "/usuarios", icon: Users, permission: "canViewUsuarios" },
+  {
+    name: "Vehículos",
+    href: "/vehiculos",
+    icon: Car,
+    permission: "canViewVehiculos",
+  },
+  {
+    name: "Gastos",
+    href: "/gastos",
+    icon: DollarSign,
+    permission: "canViewGastos",
+  },
+  {
+    name: "Gastos Externos",
+    href: "/gastos-externos",
+    icon: Receipt,
+    permission: "canViewGastosExternos",
+  },
+  {
+    name: "Usuarios",
+    href: "/usuarios",
+    icon: Users,
+    permission: "canViewUsuarios",
+  },
 ];
 
 export default function DashboardLayout({
